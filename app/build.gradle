@@ -23,6 +23,9 @@ dependencies {
 
     // This dependency is used by the application.
     implementation libs.guava
+ 
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-rsocket
+    implementation 'org.springframework.boot:spring-boot-starter-rsocket:3.3.4'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
