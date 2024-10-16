@@ -18,6 +18,6 @@ for both Java & JavaScript.
 ```
 
 ```sh
-cd client && yarn pbjs -t static-module -w es6 -o ./src/generated/compiled.js ../app/src/main/proto/api.proto
-cd client && yarn pbts -o ./src/generated/compiled.d.ts ./src/generated/compiled.js
+cd client && yarn pbjs -t static-module -w es6 -o ./src/generated/eq.js ../app/src/main/proto/eq.proto ../app/src/main/proto/mutation.proto
+cd client && yarn pbts -o ./src/generated/eq.d.ts ./src/generated/eq.js
 ```
