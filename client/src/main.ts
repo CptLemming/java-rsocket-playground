@@ -5,8 +5,10 @@ import {
 } from "rsocket-core";
 import { WebsocketClientTransport } from "rsocket-websocket-client";
 import { Buffer } from 'buffer'
+import { io } from "./generated/compiled";
 import { encodeAndAddWellKnownMetadata, encodeRoute, WellKnownMimeType } from 'rsocket-composite-metadata';
-// @ts-ignore
+
+// rsocket-core requires us to monkey patch this into browser environments
 globalThis.Buffer = Buffer
 
 function makeConnector() {
@@ -48,11 +50,47 @@ async function main() {
   // });
   // console.log('end:warning');
 
+  // await new Promise((resolve, reject) => {
+  //   console.log('start:channel');
+  //   getChannel(rsocket, resolve, reject);
+  // });
+  // console.log('end:channel');
+
   await new Promise((resolve, reject) => {
-    console.log('start:channel');
-    getChannel(rsocket, resolve, reject);
+    console.log('start:rpc');
+    getRPCRequestReply(rsocket, resolve, reject);
   });
-  console.log('end:channel');
+  console.log('end:rpc');
+}
+
+async function getRPCRequestReply(rsocket: RSocket, resolve: (a: any) => void, reject: (a: any) => void) {
+  const client = io.rsocket.rpc.testing.SimpleService.create((req, data, onDone) => {
+    const routeMetadata = encodeRoute(`io.rsocket.rpc.testing.SimpleService.${req.name}`);
+    const metadata = encodeAndAddWellKnownMetadata(
+      Buffer.alloc(0),
+      WellKnownMimeType.MESSAGE_RSOCKET_ROUTING,
+      routeMetadata
+    );
+
+    rsocket.requestResponse({
+      data: Buffer.from(data),
+      metadata,
+    }, {
+      onError: e => {
+        onDone(e);
+      },
+      onNext: (payload, isComplete) => {
+        onDone(null, payload.data);
+      },
+      onComplete: () => {
+        onDone(null, null);
+      },
+      onExtension: () => {},
+    });
+  });
+
+  const msg = await client.requestReply(io.rsocket.rpc.testing.SimpleRequest.create({ requestMessage: "1234"}));
+  console.log('msg', msg);
 }
 
 function sendWarning(rsocket: RSocket, resolve: (a: any) => void, reject: (a: any) => void) {
@@ -72,7 +110,7 @@ function sendWarning(rsocket: RSocket, resolve: (a: any) => void, reject: (a: an
     },
     onNext: (payload, isComplete) => {
       console.log('next', payload, isComplete);
-      const msg = new TextDecoder().decode(payload.data);
+      const msg = new TextDecoder().decode(payload.data as any);
       console.log('msg', msg);
     },
     onComplete: () => {
@@ -100,7 +138,7 @@ function getSendMessage(rsocket: RSocket, resolve: (a: any) => void, reject: (a:
     },
     onNext: (payload, isComplete) => {
       console.log('next', payload, isComplete);
-      const msg = new TextDecoder().decode(payload.data);
+      const msg = new TextDecoder().decode(payload.data as any);
       console.log('msg', msg);
     },
     onComplete: () => {
@@ -128,7 +166,7 @@ function getCounterStream(rsocket: RSocket, resolve: (a: any) => void, reject: (
     },
     onNext: (payload, isComplete) => {
       console.log('next', payload, isComplete);
-      const msg = new TextDecoder().decode(payload.data);
+      const msg = new TextDecoder().decode(payload.data as any);
       console.log('msg', msg);
     },
     onComplete: () => {
@@ -180,7 +218,7 @@ function getChannel(rsocket: RSocket, resolve: (a: any) => void, reject: (a: any
     },
     onNext: (payload, isComplete) => {
       console.log('incoming', payload, isComplete);
-      const msg = new TextDecoder().decode(payload.data);
+      const msg = new TextDecoder().decode(payload.data as any);
       console.log('msg', msg);
 
       req.request(1);
