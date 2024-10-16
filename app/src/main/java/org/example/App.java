@@ -18,7 +18,7 @@ public class App {
 
   @Bean
   public RSocketServiceProxyFactory getRSocketServiceProxyFactory(RSocketRequester.Builder requestBuilder) {
-    RSocketRequester requester = requestBuilder.tcp("localhost", 7000);
+    RSocketRequester requester = requestBuilder.tcp("0.0.0.0", 7000);
     return RSocketServiceProxyFactory.builder(requester)
         .build();
   }
